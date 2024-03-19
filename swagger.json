@@ -1,0 +1,523 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "version": "0.1",
+    "title": "Water tracker",
+    "description": "Back-end documentation for the water tracker",
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "servers": [{ "url": "http://localhost:1111" }],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authorization endpoints"
+    },
+    {
+      "name": "Water",
+      "description": "Waters endpoints"
+    }
+  ],
+  "paths": {
+    "/signup": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "User Signup",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "User Signup Request Body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/UserSignup" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "schema": { "$ref": "#/definitions/SignupResponse" }
+          },
+          "409": {
+            "description": "Email in use",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      }
+    },
+    "/verify/{verificationCode}": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Verify Email",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "verificationCode",
+            "in": "path",
+            "description": "Verification code received via email",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Email verified successfully",
+            "schema": { "$ref": "#/definitions/SuccessMessage" }
+          },
+          "404": {
+            "description": "User not found",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      }
+    },
+    "/verify": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Resend Verification Email",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Resend Verification Email Request Body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/UserEmail" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification email sent",
+            "schema": { "$ref": "#/definitions/SuccessMessage" }
+          },
+          "404": {
+            "description": "Email not found",
+            "schema": { "$ref": "#/definitions/Error" }
+          },
+          "400": {
+            "description": "Verification has already been passed",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      }
+    },
+    "/signin": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "User Signin",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "User Signin Request Body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/UserSignin" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User signed in successfully",
+            "schema": { "$ref": "#/definitions/SigninResponse" }
+          },
+          "401": {
+            "description": "Email or password is wrong or Email not verified",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      }
+    },
+    "/signout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Signout",
+        "produces": ["application/json"],
+        "security": [{ "JWT": [] }],
+        "responses": {
+          "200": {
+            "description": "Signout success",
+            "schema": { "$ref": "#/definitions/SuccessMessage" }
+          }
+        }
+      }
+    },
+    "/forgotPassword": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Forgot Password",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Forgot Password Request Body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/UserEmail" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reset password email sent",
+            "schema": { "$ref": "#/definitions/ForgotPasswordResponse" }
+          },
+          "404": {
+            "description": "User not found",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      }
+    },
+    "/resetPassword/{resetToken}": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset Password",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "resetToken",
+            "in": "path",
+            "description": "Token received via email for password reset",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Reset Password Request Body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/UserResetPassword" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password updated successfully",
+            "schema": { "$ref": "#/definitions/SuccessMessage" }
+          },
+          "404": {
+            "description": "Invalid or expired token",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      }
+    },
+    "/user/{userId}": {
+      "patch": {
+        "tags": ["Auth"],
+        "summary": "Update User Information",
+        "security": [{ "JWT": [] }],
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID of the user",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Update User Information Request Body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/UserUpdate" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User information updated successfully",
+            "schema": { "$ref": "#/definitions/SuccessMessage" }
+          },
+          "401": {
+            "description": "Unauthorized access",
+            "schema": { "$ref": "#/definitions/Error" }
+          },
+          "404": {
+            "description": "User not found",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      }
+    },
+    "/user/avatars": {
+      "patch": {
+        "tags": ["Auth"],
+        "summary": "Update User Avatar",
+        "security": [{ "JWT": [] }],
+        "consumes": ["multipart/form-data"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "file",
+            "in": "formData",
+            "description": "Image file for the user avatar",
+            "required": true,
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User avatar updated successfully",
+            "schema": { "$ref": "#/definitions/SuccessMessage" }
+          },
+          "401": {
+            "description": "Unauthorized access",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      }
+    },
+    "/current": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get Current User",
+        "produces": ["application/json"],
+        "security": [{ "JWT": [] }],
+        "responses": {
+          "200": {
+            "description": "Current user retrieved successfully",
+            "schema": { "$ref": "#/definitions/CurrentUser" }
+          }
+        }
+      }
+    },
+    "/water": {
+      "post": {
+        "tags": ["Water"],
+        "security": [{ "JWT": [] }],
+
+        "summary": "Add Consumed Water",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Add Consumed Water Request Body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/WaterAdd" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Water consumption recorded successfully",
+            "schema": { "$ref": "#/definitions/SuccessMessage" }
+          }
+        }
+      }
+    },
+    "/water/{waterId}": {
+      "patch": {
+        "tags": ["Water"],
+        "security": [{ "JWT": [] }],
+
+        "summary": "Update Water Consumption",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "waterId",
+            "in": "path",
+            "description": "ID of the water consumption record",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Update Water Consumption Request Body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/WaterAdd" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Water consumption updated successfully",
+            "schema": { "$ref": "#/definitions/SuccessMessage" }
+          },
+          "404": {
+            "description": "Water consumption record not found",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Water"],
+        "security": [{ "JWT": [] }],
+
+        "summary": "Delete Water Consumption Record",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "waterId",
+            "in": "path",
+            "description": "ID of the water consumption record",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Water consumption record deleted successfully",
+            "schema": { "$ref": "#/definitions/SuccessMessage" }
+          },
+          "404": {
+            "description": "Water consumption record not found",
+            "schema": { "$ref": "#/definitions/Error" }
+          }
+        }
+      }
+    },
+    "/water/today": {
+      "get": {
+        "tags": ["Water"],
+        "summary": "Get Today's Water Consumption",
+        "produces": ["application/json"],
+        "security": [{ "JWT": [] }],
+        "responses": {
+          "200": {
+            "description": "Today's water consumption retrieved successfully",
+            "schema": { "$ref": "#/definitions/TodayWaterInfo" }
+          }
+        }
+      }
+    },
+    "/water/month": {
+      "get": {
+        "tags": ["Water"],
+        "summary": "Get Monthly Water Consumption",
+        "produces": ["application/json"],
+        "security": [{ "JWT": [] }],
+        "responses": {
+          "200": {
+            "description": "Monthly water consumption retrieved successfully",
+            "schema": { "$ref": "#/definitions/MonthlyWaterInfo" }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "UserSignup": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "password": { "type": "string" }
+      }
+    },
+    "SignupResponse": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      }
+    },
+    "UserUpdate": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "gender": { "type": "string" },
+        "outdatedPassword": { "type": "string" },
+        "newPassword": { "type": "string" }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" }
+      }
+    },
+    "SuccessMessage": {
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" }
+      }
+    },
+    "UserEmail": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      }
+    },
+    "UserSignin": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "password": { "type": "string" }
+      }
+    },
+    "SigninResponse": {
+      "type": "object",
+      "properties": {
+        "token": { "type": "string" },
+        "user": {
+          "type": "object",
+          "properties": {
+            "email": { "type": "string" }
+          }
+        }
+      }
+    },
+    "ForgotPasswordResponse": {
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "resetToken": { "type": "string" }
+      }
+    },
+    "UserResetPassword": {
+      "type": "object",
+      "properties": {
+        "newPassword": { "type": "string" }
+      }
+    },
+    "CurrentUser": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      }
+    },
+    "WaterAdd": {
+      "type": "object",
+      "properties": {
+        "time": { "type": "string" },
+        "count": { "type": "string" }
+      }
+    },
+    "TodayWaterInfo": {
+      "type": "object",
+      "properties": {
+        "percentageUsedRounded": { "type": "number" },
+        "waterRecords": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/WaterRecord" }
+        }
+      }
+    },
+    "MonthlyWaterInfo": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/MonthlyWaterRecord" }
+    },
+    "WaterRecord": {
+      "type": "object"
+    },
+    "MonthlyWaterRecord": {
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "dailyWaterRate": { "type": "number" },
+        "percentageUsedRounded": { "type": "number" },
+        "consumptionCount": { "type": "number" }
+      }
+    }
+  }
+}
